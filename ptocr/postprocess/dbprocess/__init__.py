@@ -10,8 +10,8 @@ import numpy as np
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
-if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
-    raise RuntimeError('Cannot compile pse: {}'.format(BASE_DIR))
+# if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
+#     raise RuntimeError('Cannot compile pse: {}'.format(BASE_DIR))
 
     
 def cpp_boxes_from_bitmap(pred,bitmap,box_thresh=0.6,det_db_unclip_ratio=2.0):

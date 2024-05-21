@@ -4,6 +4,7 @@
 @file: DBProcess.py
 @time: 2020/08/11
 """
+import os
 import cv2
 import torch
 import numpy as np
@@ -101,10 +102,11 @@ class DBProcessTrainMul(data.Dataset):
         self.MBM = MakeBorderMap()
         self.TSM = Random_Augment(self.crop_shape)
         self.MSM = MakeSegMap(shrink_ratio = config['base']['shrink_ratio'])
-        img_list, label_list = self.get_base_information(config['trainload']['train_file'])
+        self.class_names = config['base']['class_names']
+        img_list, label_list = self.get_base_information(config['trainload']['bash_path'], config['trainload']['train_file'])
         self.img_list = img_list
         self.label_list = label_list
-        self.class_names=config['base']['class_names']
+        
         
     def order_points(self, pts):
         rect = np.zeros((4, 2), dtype="float32")
@@ -116,50 +118,42 @@ class DBProcessTrainMul(data.Dataset):
         rect[3] = pts[np.argmax(diff)]
         return rect
     
-    def get_bboxes(self,gt_path):
+    def get_bboxes(self, bboxes_str):
         polys = []
         tags = []
         classes = []
-        # class_names=['name','sex','nation','birthday','address_line1','address_line2',
-        #              'address_line3',
-        #              'id_number',
-        #              'office',
-        #              'effective_date'
-        #              ]
+        bboxes = eval(bboxes_str)
 
-        #class_names=['reportTelPhone', 'reportResult', 'reportID', 'reportName', 'reportOrg', 'reportTime']
+        for bbox in bboxes:
+            cls = bbox['cls']
+            points = bbox['points']
+            if "#" in cls:
+                tags.append(True)
+                classes.append(-2)
+            else:
+                tags.append(False)
+                index = self.class_names.index(cls)
+                classes.append(index)
 
-        with open(gt_path, 'r', encoding='utf-8') as fid:
-            lines = fid.readlines()
-            for line in lines:
-                line = line.replace('\ufeff', '').replace('\xef\xbb\xbf', '')
-                gt = line.split(',')
-                if "#" in gt[-1]:
-                    tags.append(True)
-                    classes.append(-2)
-                else:
-                    tags.append(False)
-                    #classes.append(int(gt[-1]))
-                    #index=class_names.index(gt[-2].replace('\n',''))
-                    index = self.class_names.index(gt[-1].replace('\n', ''))
-                    classes.append(index)
-
-                # box = [int(gt[i]) for i in range(len(gt)//2*2)]
-                box = [int(gt[i]) for i in range(8)]
-                polys.append(box)
+            box = []
+            box += points[0]
+            box += points[3]
+            box += points[2]
+            box += points[1]
+            polys.append(box)
         return np.array(polys), tags, classes
 
-    def get_base_information(self,train_txt_file):
+    def get_base_information(self, bash_path, train_txt_file):
         label_list = []
         img_list = []
         with open(train_txt_file,'r',encoding='utf-8') as fid:
             lines = fid.readlines()
             for line in lines:
                 line = line.strip('\n').split('\t')
-                img_list.append(line[0])
+                img_list.append(os.path.join(bash_path,line[0]))
                 result = self.get_bboxes(line[1])
                 label_list.append(result)
-        return img_list,label_list
+        return img_list, label_list
 
     def __len__(self):
         return len(self.img_list)

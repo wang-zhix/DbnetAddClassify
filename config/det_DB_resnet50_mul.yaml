@@ -1,17 +1,12 @@
 base:
-  gpu_id: '-1'  # 设置训练的gpu id，多卡训练设置为 '0,1,2'
+  gpu_id: '0'  # 设置训练的gpu id，多卡训练设置为 '0,1,2'
   algorithm: DB  # 算法名称
   pretrained: True # 是否加载预训练
   in_channels: [256, 512, 1024, 2048] # 
   inner_channels: 256 #
   k: 50
   n_class: 10
-  class_names: ['name','sex','nation','birthday','address_line1','address_line2',
-                     'address_line3',
-                     'id_number',
-                     'office',
-                     'effective_date'
-                     ]
+  class_names: ['base', 'value', 'hw']
   adaptive: True
   crop_shape: [640,640]  #训练时crop图片的大小
   shrink_ratio: 0.4 # kernel向内收缩比率
@@ -69,18 +64,19 @@ optimizer_decay:
 
 trainload:
   function: ptocr.dataloader.DetLoad.DBProcess,DBProcessTrainMul
-  train_file: ./data/IDcard/train_list.txt
-  num_workers: 4
-  batch_size: 8
+  bash_path: train_data_db
+  train_file: train_data_db/train.txt
+  num_workers: 1
+  batch_size: 1
 
 testload:
   function: ptocr.dataloader.DetLoad.DBProcess,DBProcessTest
-  test_file: ./data/IDcard/test_list.txt
-  test_gt_path: ./data/IDcard/train/gt
+  bash_path: train_data_db
+  test_file: train_data_db/test.txt
   test_size: 736
   stride: 32
-  num_workers: 4
-  batch_size: 8
+  num_workers: 1
+  batch_size: 1
   #add_padding: False
 
 postprocess:
